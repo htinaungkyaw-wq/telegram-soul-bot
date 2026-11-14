@@ -3,7 +3,7 @@ import path from 'path';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(200).send('Telegram Webhook is active.');
+    return res.status(200).send('Bot is running');
   }
 
   const message = req.body?.message;
@@ -14,63 +14,59 @@ export default async function handler(req, res) {
   const chatId = message.chat.id;
   const userText = message.text.toLowerCase().trim();
 
-  // /start နှိပ်လျှင် ကြိုဆိုရန်
   if (userText === '/start') {
-    await sendTelegramMessage(chatId, 'မင်္ဂလာပါ! သိလိုသော မေးခွန်းများကို မေးမြန်းနိုင်ပါတယ်။');
+    await sendTelegram(chatId, 'မင်္ဂလာပါ! Shwe Shop မှ ကြိုဆိုပါတယ်။ သိလိုသည်များကို မေးမြန်းနိုင်ပါတယ်။');
     return res.status(200).send('OK');
   }
 
-  // soul.md ဖိုင်ကို ဖတ်ခြင်း
-  const filePath = path.join(process.cwd(), 'soul.md');
-  const soulContent = fs.readFileSync(filePath, 'utf8');
+  try {
+    // Read soul.md from the root directory
+    const filePath = path.join(process.cwd(), 'soul.md');
+    const soulContent = fs.readFileSync(filePath, 'utf8');
 
-  // "## " ဖြင့် ပိုင်းခြားထားသော မေးခွန်းနှင့် အဖြေများကို စစ်ထုတ်ခြင်း
-  const blocks = soulContent.split(/^##\s+/m).slice(1);
-  let replyText = 'Please ask a relevant question.'; // မကိုက်ညီပါက ပြန်ဖြေမည့်စာ
+    const blocks = soulContent.split(/^##\s+/m).slice(1);
+    let replyText = 'ကျေးဇူးပြု၍ ဆိုင်နှင့်ပတ်သက်သည်များကို မေးမြန်းပေးပါ။';
+    let bestScore = 0;
 
-  // စကားလုံး အနည်းဆုံး တစ်လုံး သို့မဟုတ် စာသားတူညီမှု ရှိ/မရှိ စစ်ဆေးခြင်း
-  const userWords = userText.split(/\s+/).filter(w => w.length > 1);
-  let bestScore = 0;
+    for (const block of blocks) {
+      const lines = block.split('\n');
+      const question = lines[0].toLowerCase().trim();
+      const answer = lines.slice(1).join('\n').trim();
 
-  for (const block of blocks) {
-    const lines = block.split('\n');
-    const question = lines[0].toLowerCase().trim();
-    const answer = lines.slice(1).join('\n').trim();
+      if (!answer) continue;
 
-    if (!answer) continue;
+      if (userText.includes(question) || question.includes(userText)) {
+        replyText = answer;
+        break;
+      }
 
-    // တိုက်ရိုက်တူညီမှု စစ်ဆေးခြင်း
-    if (userText.includes(question) || question.includes(userText)) {
-      replyText = answer;
-      break;
-    }
+      let score = 0;
+      const userWords = userText.split(/\s+/);
+      for (const word of userWords) {
+        if (word.length > 1 && question.includes(word)) {
+          score++;
+        }
+      }
 
-    // စကားလုံး (Keywords) တူညီမှု အရေအတွက် တွက်ချက်ခြင်း
-    let score = 0;
-    for (const word of userWords) {
-      if (question.includes(word)) {
-        score++;
+      if (score > bestScore) {
+        bestScore = score;
+        replyText = answer;
       }
     }
 
-    if (score > bestScore) {
-      bestScore = score;
-      replyText = answer;
-    }
+    await sendTelegram(chatId, replyText);
+  } catch (err) {
+    await sendTelegram(chatId, 'Error reading soul.md: ' + err.message);
   }
 
-  await sendTelegramMessage(chatId, replyText);
   return res.status(200).send('OK');
 }
 
-async function sendTelegramMessage(chatId, text) {
+async function sendTelegram(chatId, text) {
   const token = process.env.BOT_TOKEN;
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-    }),
+    body: JSON.stringify({ chat_id: chatId, text }),
   });
 }
