@@ -3,7 +3,7 @@ import path from 'path';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(200).send('Bot is running');
+    return res.status(200).send('Bot Webhook is Running');
   }
 
   const message = req.body?.message;
@@ -20,8 +20,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Read soul.md from the root directory
-    const filePath = path.join(process.cwd(), 'soul.md');
+    let filePath = path.join(process.cwd(), 'soul.md');
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(process.cwd(), '..', 'soul.md');
+    }
+    if (!fs.existsSync(filePath)) {
+      filePath = path.resolve('./soul.md');
+    }
+
     const soulContent = fs.readFileSync(filePath, 'utf8');
 
     const blocks = soulContent.split(/^##\s+/m).slice(1);
@@ -56,7 +62,7 @@ export default async function handler(req, res) {
 
     await sendTelegram(chatId, replyText);
   } catch (err) {
-    await sendTelegram(chatId, 'Error reading soul.md: ' + err.message);
+    await sendTelegram(chatId, 'Error: ' + err.message);
   }
 
   return res.status(200).send('OK');
