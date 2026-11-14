@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soul Knowledge Base</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+      margin: 0;
+    }
+    .container {
+      max-width: 700px;
+      width: 100%;
+      background: #1e293b;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    h1 { color: #38bdf8; margin-top: 0; }
+    .status {
+      display: inline-block;
+      background: #065f46;
+      color: #6ee7b7;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    pre {
+      background: #0f172a;
+      padding: 1.2rem;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      border: 1px solid #334155;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📄 Soul.md Knowledge Base</h1>
+    <div class="status">● Telegram Bot Webhook Active (No AI)</div>
+    <p>လက်ရှိ Bot မှ ပြန်လည်ဖြေကြားပေးနိုင်သော အချက်အလက်များ -</p>
+    <pre id="soul-content">Loading soul.md...</pre>
+  </div>
+
+  <script>
+    fetch('/api/soul')
+      .then(res => res.text())
+      .then(text => {
+        document.getElementById('soul-content').textContent = text;
+      })
+      .catch(() => {
+        document.getElementById('soul-content').textContent = 'Error loading soul.md';
+      });
+  </script>
+</body>
+</html>
